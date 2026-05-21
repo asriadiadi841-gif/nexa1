@@ -480,7 +480,7 @@
         document.getElementById('filter-date-end').value = hariIni;
 
         // 📷 LOGIKA SISTEM SCANNER KAMERA HP/TABLET
-       // 📷 LOGIKA SISTEM SCANNER KAMERA HP/TABLET (VERSI OPTIMAL SUPER CEPAT)
+      // 📷 LOGIKA SISTEM SCANNER KAMERA HP/TABLET (VERSI REVISI AKURAT)
         async function toggleScanner() {
             const container = document.getElementById('scanner-container');
             const btnText = document.getElementById('btn-scan-text');
@@ -491,29 +491,27 @@
 
                 html5QrScanner = new Html5Qrcode("qr-reader");
                 
-                // Konfigurasi Ringan & Sangat Responsif Khusus Barcode Batang (1D)
+                // Konfigurasi performa seimbang, menghilangkan beban lag prosesor
                 const config = { 
-                    fps: 10, // Diturunkan ke 10-12 agar browser memiliki waktu memproses garis barcode tanpa lag
+                    fps: 10, 
                     qrbox: function(viewfinderWidth, viewfinderHeight) {
-                        // Membuat kotak pemindai adaptif memanjang (sangat pas untuk barcode rokok/kaleng)
+                        // Membuat kotak pemindai horizontal memanjang (sangat pas untuk barcode batang)
                         return {
                             width: Math.floor(viewfinderWidth * 0.85),
-                            height: Math.floor(viewfinderHeight * 0.4)
+                            height: Math.floor(viewfinderHeight * 0.45)
                         };
                     },
-                    aspectRatio: 1.777778, // Memaksa rasio 16:9 agar gambar tajam tidak stretch
-                    experimentalFeatures: {
-                        useBarCodeDetectorIfSupported: true // Menggunakan hardware akselerasi bawaan HP jika mendukung
-                    }
+                    aspectRatio: 1.777778
                 };
 
-                // Jalankan kamera belakang perangkat (environment) dengan resolusi HD agar garis barcode tegak jelas
+                // PERBAIKAN SINTAKSIS: Parameter kamera belakang (environment) yang valid untuk iOS & Android
                 html5QrScanner.start(
-                    { facingMode: "environment", video: { width: { ideal: 1280 }, height: { ideal: 720 } } }, 
+                    { facingMode: "environment" }, 
                     config,
                     onScanSuccess,
                     onScanFailure
                 ).catch(err => {
+                    console.error("Detail Eror Kamera:", err);
                     alert("Gagal mengakses kamera. Pastikan Anda memberi izin akses kamera pada browser.");
                     toggleScanner();
                 });
@@ -526,7 +524,6 @@
                 }
             }
         }
-
         // Variabel pengunci (lock) anti-spam alarm keranjang
         let sedangMemprosesScan = false;
 
