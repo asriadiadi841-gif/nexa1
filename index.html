@@ -479,8 +479,7 @@
         document.getElementById('filter-date-start').value = hariIni;
         document.getElementById('filter-date-end').value = hariIni;
 
-        // 📷 LOGIKA SISTEM SCANNER KAMERA HP/TABLET
-      // 📷 LOGIKA SISTEM SCANNER KAMERA HP/TABLET (VERSI REVISI AKURAT)
+   // 📷 LOGIKA SISTEM SCANNER KAMERA HP/TABLET (VERSI ULTRA RESPONSIF - BARCODE ONLY)
         async function toggleScanner() {
             const container = document.getElementById('scanner-container');
             const btnText = document.getElementById('btn-scan-text');
@@ -489,29 +488,39 @@
                 container.classList.remove('hidden');
                 btnText.innerText = "Matikan Scanner";
 
-                html5QrScanner = new Html5Qrcode("qr-reader");
+                // Inisialisasi scanner dengan opsi pemrosesan gambar yang dipercepat
+                html5QrScanner = new Html5Qrcode("qr-reader", { 
+                    useBarCodeDetectorIfSupported: true 
+                });
                 
-                // Konfigurasi performa seimbang, menghilangkan beban lag prosesor
+                // KONFIGURASI TOTAL: Fokus penuh hanya pada Barcode Batang Minimarket (EAN/UPC)
                 const config = { 
-                    fps: 10, 
+                    fps: 15, // Kecepatan frame ideal agar prosesor tidak tersendat
                     qrbox: function(viewfinderWidth, viewfinderHeight) {
-                        // Membuat kotak pemindai horizontal memanjang (sangat pas untuk barcode batang)
+                        // Kotak dibuat melebar tipis secara horizontal agar pas dengan bentuk barcode batang
                         return {
                             width: Math.floor(viewfinderWidth * 0.85),
-                            height: Math.floor(viewfinderHeight * 0.45)
+                            height: Math.floor(viewfinderHeight * 0.35)
                         };
                     },
-                    aspectRatio: 1.777778
+                    aspectRatio: 1.777778,
+                    // KUNCI PERFORMA INSTAN: Batasi pencarian HANYA untuk barcode produk ritel umum
+                    formatsToSupport: [ 
+                        Html5QrcodeSupportedFormats.EAN_13, 
+                        Html5QrcodeSupportedFormats.EAN_8, 
+                        Html5QrcodeSupportedFormats.UPC_A, 
+                        Html5QrcodeSupportedFormats.UPC_E 
+                    ]
                 };
 
-                // PERBAIKAN SINTAKSIS: Parameter kamera belakang (environment) yang valid untuk iOS & Android
+                // Panggil kamera belakang secara langsung dengan konfigurasi optimasi
                 html5QrScanner.start(
                     { facingMode: "environment" }, 
                     config,
                     onScanSuccess,
                     onScanFailure
                 ).catch(err => {
-                    console.error("Detail Eror Kamera:", err);
+                    console.error("Eror Kamera:", err);
                     alert("Gagal mengakses kamera. Pastikan Anda memberi izin akses kamera pada browser.");
                     toggleScanner();
                 });
