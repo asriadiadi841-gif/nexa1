@@ -490,10 +490,11 @@
 
                 html5QrScanner = new Html5Qrcode("qr-reader");
                 // KODE BARU (OPTIMASI UNTUK BARCODE BATANG EAN-13/UPC)
+// Memperbesar qrbox agar jangkauan kamera lebih jauh dan luas
 const config = { 
-    fps: 20, 
-    qrbox: { width: 280, height: 160 },
-    aspectRatio: 1.777778, // Mengatur rasio kamera 16:9 agar gambar tidak pecah/stretch
+    fps: 25, // Menaikkan FPS agar tracking gerakan lebih mulus
+    qrbox: { width: 320, height: 200 }, // Ukuran kotak diperbesar dari sebelumnya
+    aspectRatio: 1.777778,
     formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8 ]
 };
 
@@ -517,28 +518,55 @@ const config = {
             }
         }
 
-        // Ketika kamera mendeteksi barcode
-        async function onScanSuccess(decodedText, decodedResult) {
-            // Cari produk di database lokal berdasarkan kode barcode hasil scan
-            const produkTerdeteksi = await db.products.where("barcode").equals(decodedText.trim()).first();
+        // Tambahkan variabel pengunci (lock) di luar fungsi agar tidak terjadi spam
+let sedangMemprosesScan = false;
 
-            if (produkTerdeteksi) {
-                tambahKeKeranjang(produkTerdeteksi.id);
-                // Efek suara bip buatan sederhana lewat internal browser api
-                if (window.AudioContext || window.webkitAudioContext) {
-                    let ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    let osc = ctx.createOscillator();
-                    osc.type = "sine";
-                    osc.frequency.value = 800;
-                    osc.connect(ctx.destination);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.1);
-                }
-            } else {
-                alert(`Barcode terdeteksi: "${decodedText}", namun produk belum didaftarkan di inventori oleh Admin.`);
-            }
+async function onScanSuccess(decodedText, decodedResult) {
+    // 1. KUNCI SISTEM: Jika sedang memproses barcode sebelumnya, abaikan scan baru
+    if (sedangMemprosesScan) return;
+    sedangMemprosesScan = true;
+
+    // Cari produk di database lokal berdasarkan kode barcode hasil scan
+    const produkTerdeteksi = await db.products.where("barcode").equals(decodedText.trim()).first();
+
+    if (produkTerdeteksi) {
+        tambahKeKeranjang(produkTerdeteksi.id);
+        
+        // Efek suara bip buatan sederhana lewat internal browser api
+        if (window.AudioContext || window.webkitAudioContext) {
+            let ctx = new (window.AudioContext || window.webkitAudioContext)();
+            let osc = ctx.createOscillator();
+            let gainNode = ctx.createGain();
+            
+            osc.type = "sine";
+            osc.frequency.value = 800;
+            
+            // Mengatur volume agar suara bip tegas dan bersih
+            gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+            
+            osc.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            osc.start();
+            osc.stop(ctx.currentTime + 0.15);
         }
 
+        // VIBRASI: Berikan efek getar pendek pada HP jika didukung (khusus Android/beberapa iOS)
+        if (navigator.vibrate) {
+            navigator.vibrate(80);
+        }
+    } else {
+        // Jika produk tidak terdaftar, beri peringatan berupa alert biasa
+        alert(`Barcode terdeteksi: "${decodedText}", namun produk belum didaftarkan di inventori oleh Admin.`);
+    }
+
+    // 2. JEDA WAKTU (COOL DOWN): Buka kembali kunci scanner setelah 2 detik (2000 ms)
+    // Ini mencegah efek "spam alarm" dan memberikan waktu kasir menjauhkan barang
+    setTimeout(() => {
+        sedangMemprosesScan = false;
+    }, 2000);
+}
         function onScanFailure(error) {
             // Biarkan berjalan mencari frame barcode berikutnya
         }
