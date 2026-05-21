@@ -492,11 +492,12 @@
                 // KODE BARU (OPTIMASI UNTUK BARCODE BATANG EAN-13/UPC)
 // Memperbesar qrbox agar jangkauan kamera lebih jauh dan luas
 // Konfigurasi baru: Ringan, responsif, dan jangkauan luas
+// Memperbesar qrbox agar jangkauan kamera lebih jauh dan luas
 const config = { 
-    fps: 15, // Diturunkan ke 15 agar browser tidak lag/patah-patah saat memproses gambar
-    qrbox: { width: 300, height: 180 }, // Ukuran ideal untuk barcode batang
-    aspectRatio: 1.777778
-    // formatsToSupport DIHAPUS agar library otomatis mendeteksi segala jenis barcode secara global tanpa macet
+    fps: 25, // Menaikkan FPS agar tracking gerakan lebih mulus
+    qrbox: { width: 320, height: 200 }, // Ukuran kotak diperbesar dari sebelumnya
+    aspectRatio: 1.777778,
+    formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8 ]
 };
                 // Jalankan kamera belakang perangkat (environment)
                 html5QrScanner.start(
